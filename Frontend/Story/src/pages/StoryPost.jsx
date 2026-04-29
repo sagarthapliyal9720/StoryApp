@@ -13,28 +13,33 @@ export default function StoryPost() {
     e.preventDefault();
 
     setLoading(true);
-    setMessage("");
+    setMessage("Please wait 2–4 minutes, audio is generating...");
 
     try {
       const token = localStorage.getItem("access");
 
-      const response = await fetch("https://storyapp-38sq.onrender.com/upload/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title,
-          content,
-          language,
-          genre,
-        }),
-      });
+      const response = await fetch(
+        "https://storyapp-38sq.onrender.com/upload/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            language,
+            genre,
+          }),
+        }
+      );
 
-      if (!response.ok) throw new Error("Story upload failed");
+      if (!response.ok) {
+        throw new Error("Story upload failed");
+      }
 
-      setMessage("Story created successfully ✓");
+      setMessage("Story created successfully ✓ Audio generated ✓");
 
       setTitle("");
       setContent("");
@@ -68,6 +73,7 @@ export default function StoryPost() {
               placeholder="Enter story title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
             />
           </div>
 
@@ -79,6 +85,7 @@ export default function StoryPost() {
               placeholder="Write your story..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              disabled={loading}
             />
           </div>
 
@@ -89,6 +96,7 @@ export default function StoryPost() {
               className="p-3 rounded-lg bg-[#0D0B12] border border-gray-700 text-gray-300 focus:border-[#C8A96E]"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
+              disabled={loading}
             >
               <option value="">Language</option>
               <option value="hindi">Hindi</option>
@@ -99,6 +107,7 @@ export default function StoryPost() {
               className="p-3 rounded-lg bg-[#0D0B12] border border-gray-700 text-gray-300 focus:border-[#C8A96E]"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
+              disabled={loading}
             >
               <option value="">Genre</option>
               <option value="Emotion">Emotion</option>
@@ -115,12 +124,12 @@ export default function StoryPost() {
             disabled={loading}
             className="w-full py-3 rounded-full bg-[#C8A96E] text-black font-medium hover:bg-[#e0c07a] transition"
           >
-            {loading ? "Uploading..." : "Create Story"}
+            {loading ? "Generating Audio... Please Wait" : "Create Story"}
           </button>
 
           {/* MESSAGE */}
           {message && (
-            <p className="text-center text-sm text-gray-400 mt-3">
+            <p className="text-center text-sm text-yellow-300 mt-3">
               {message}
             </p>
           )}
