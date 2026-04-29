@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+*.log
+.env
+
+config/db.sqlite3
+config/media/
+
+Frontend/story/node_modules/
+Frontend/story/build/
+Frontend/story/dist/
+
+.vscode/
