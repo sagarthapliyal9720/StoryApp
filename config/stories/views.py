@@ -19,29 +19,33 @@ from rest_framework.response import Response
 from .models import Story
 from gtts import gTTS
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def listen_story(request, id):
     try:
         story = Story.objects.get(id=id)
     except Story.DoesNotExist:
-        return Response({"error": "Story not found"}, status=404)
+        return Response(
+            {"error": "Story not found"},
+            status=404
+        )
 
-    # File path (media/audio/story_1.mp3)
-    file_path = os.path.join(settings.MEDIA_ROOT, f"audio/story_{id}.mp3")
+    file_path = os.path.join(
+        settings.MEDIA_ROOT,
+        f"audio/story_{id}.mp3"
+    )
 
-    # ✅ Ensure folder exists
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-    # Decide language
-    lang = "hi" if story.language == "hindi" else "en"
-
-    # ✅ Generate audio only if not exists
     if not os.path.exists(file_path):
-        tts = gTTS(text=story.content, lang=lang)
-        tts.save(file_path)
+        return Response(
+            {"error": "Audio not generated yet"},
+            status=404
+        )
 
-    # ✅ Return audio file
-    return FileResponse(open(file_path, 'rb'), content_type='audio/mpeg')
+    return FileResponse(
+        open(file_path, "rb"),
+        content_type="audio/mpeg"
+    )
+
 
 class StoryView(GenericAPIView):
     queryset = Story.objects.all()
@@ -153,20 +157,69 @@ class Likeview(GenericAPIView):
 
 
 class Add_storyView(APIView):
-     permission_classes=[IsAuthenticated]
-     def post(self,request):
-         serailizer=StorySerializer(data=request.data)
-         if serailizer.is_valid():
-             serailizer.save(author=request.user)
-             return Response(serailizer.data,status=status.HTTP_201_CREATED)
-         return Response(serailizer.errors,status=status.HTTP_400_BAD_REQUEST)
-     def get(self,request):
-         story=Story.objects.filter(author=request.user)
+    permission_classes = [IsAuthenticated]
 
-         serializer=StorySerializer(story,many=True)
-         return Response(serializer.data,status=status.HTTP_200_OK)
-     
+    def post(self, request):
+        serializer = StorySerializer(data=request.data)
 
+        if serializer.is_valid():
+            story = serializer.save(
+                author=request.user
+            )
+
+            # generate audio after story save
+            try:
+                file_path = os.path.join(
+                    settings.MEDIA_ROOT,
+                    f"audio/story_{story.id}.mp3"
+                )
+
+                os.makedirs(
+                    os.path.dirname(file_path),
+                    exist_ok=True
+                )
+
+                lang = "hi" if story.language == "hindi" else "en"
+
+                tts = gTTS(
+                    text=story.content,
+                    lang=lang
+                )
+
+                tts.save(file_path)
+
+            except Exception as e:
+                print(
+                    "Audio generation failed:",
+                    str(e)
+                )
+
+            return Response(
+                {
+                    "message": "Story created and audio generated successfully"
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def get(self, request):
+        stories = Story.objects.filter(
+            author=request.user
+        )
+
+        serializer = StorySerializer(
+            stories,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 class EditStoryview(APIView):
     permission_classes=[IsAuthenticated]
     def patch(self,request,id):
