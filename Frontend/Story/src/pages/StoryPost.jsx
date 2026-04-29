@@ -18,7 +18,7 @@ export default function StoryPost() {
     try {
       const token = localStorage.getItem("access");
 
-      const response = await fetch("http://127.0.0.1:8000/upload/", {
+      const response = await fetch("https://storyapp-38sq.onrender.com/upload/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

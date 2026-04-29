@@ -21,7 +21,7 @@ export default function Home() {
     try {
       setLoading(true);
 
-      let url = `http://127.0.0.1:8000/?`;
+      let url = `https://storyapp-38sq.onrender.com/?`;
 
       if (searchTerm) url += `search=${searchTerm}&`;
       if (language) url += `language=${language}&`;
@@ -49,27 +49,46 @@ export default function Home() {
     }
   }
 
-  async function fetchRecommendations() {
-    try {
-      setRecommendLoading(true);
+ async function fetchRecommendations() {
+  try {
+    setRecommendLoading(true);
 
-      const token = localStorage.getItem("access");
-      if (!token) return setRecommendedStories([]);
+    const token = localStorage.getItem("access");
 
-      const res = await fetch("http://127.0.0.1:8000/rec/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) return setRecommendedStories([]);
-
-      const data = await res.json();
-      setRecommendedStories(data.recommended_stories);
-    } catch {
+    if (!token) {
       setRecommendedStories([]);
-    } finally {
-      setRecommendLoading(false);
+      return;
     }
+
+    const res = await fetch(
+      "https://storyapp-38sq.onrender.com/rec/",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      setRecommendedStories([]);
+      return;
+    }
+
+    const data = await res.json();
+
+    setRecommendedStories(
+      Array.isArray(data.recommended_stories)
+        ? data.recommended_stories
+        : []
+    );
+
+  } catch (error) {
+    console.log(error);
+    setRecommendedStories([]);
+  } finally {
+    setRecommendLoading(false);
   }
+}
 
   useEffect(() => {
     const timer = setTimeout(() => {

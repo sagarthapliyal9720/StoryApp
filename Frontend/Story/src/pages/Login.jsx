@@ -4,18 +4,34 @@ import { useNavigate } from "react-router-dom";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   async function handleSubmit() {
     try {
-      const response = await fetch("http://127.0.0.1:8000/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      setLoading(true);
+      setError("");
 
-      if (!response.ok) throw new Error();
+      const response = await fetch(
+        "https://storyapp-38sq.onrender.com/login/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error();
+      }
 
       const data = await response.json();
 
@@ -24,6 +40,8 @@ export default function Login() {
       navigate("/");
     } catch (error) {
       setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -42,43 +60,66 @@ export default function Login() {
 
         <div className="space-y-4">
 
+          {/* Email */}
           <div>
-            <label className="text-xs text-gray-400">Email</label>
+            <label className="text-xs text-gray-400">
+              Email
+            </label>
+
             <input
               className="w-full mt-1 p-3 rounded-lg bg-[#0D0B12] border border-yellow-700/20 focus:border-yellow-400 outline-none"
               type="email"
               placeholder="Enter email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="text-xs text-gray-400">Password</label>
+            <label className="text-xs text-gray-400">
+              Password
+            </label>
+
             <input
               className="w-full mt-1 p-3 rounded-lg bg-[#0D0B12] border border-yellow-700/20 focus:border-yellow-400 outline-none"
               type="password"
               placeholder="Enter password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
             />
           </div>
 
+          {/* Error */}
           {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
+            <p className="text-red-400 text-sm text-center">
+              {error}
+            </p>
           )}
 
+          {/* Button */}
           <button
             onClick={handleSubmit}
-            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 rounded-lg transition"
+            disabled={loading}
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            Login
+            {loading ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Logging in...
+              </>
+            ) : (
+              "Login"
+            )}
           </button>
 
+          {/* Register */}
           <p className="text-center text-sm text-gray-400 mt-4">
             Don’t have an account?{" "}
             <span
-              onClick={() => navigate("/register")}
+              onClick={() => !loading && navigate("/register")}
               className="text-yellow-400 cursor-pointer"
             >
               Sign up

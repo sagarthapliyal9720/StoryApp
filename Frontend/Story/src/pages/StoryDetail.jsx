@@ -19,7 +19,7 @@ export default function StoryDetail() {
       const token = localStorage.getItem("access");
 
       const response = await fetch(
-        `http://127.0.0.1:8000/bookmark/${id}/`,
+        `https://storyapp-38sq.onrender.com/bookmark/${id}/`,
         {
           method: "POST",
           headers: {
@@ -41,14 +41,14 @@ export default function StoryDetail() {
 
   const handleListen = () => {
     setAudioLoading(true);
-    setAudioUrl(`http://127.0.0.1:8000/listen/${id}/`);
+    setAudioUrl(`https://storyapp-38sq.onrender.com/listen/${id}/`);
   };
 
   useEffect(() => {
     async function fetchStory() {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/story/${id}/`
+          `https://storyapp-38sq.onrender.com/story/${id}/`
         );
         if (!response.ok) throw new Error("Story not found");
 

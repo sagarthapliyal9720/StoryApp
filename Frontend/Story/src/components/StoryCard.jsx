@@ -23,7 +23,7 @@ export default function StoryCard({ story }) {
       setLoading(true);
 
       const response = await fetch(
-        `http://127.0.0.1:8000/like/${story.id}/`,
+        `https://storyapp-38sq.onrender.com/like/${story.id}/`,
         {
           method: "POST",
           headers: {
@@ -53,200 +53,192 @@ export default function StoryCard({ story }) {
 
   /* genre → emoji cover mapping */
   const coverEmoji = {
-    Adventure: { emoji: "⚔️", bg: "linear-gradient(135deg, #1E2A4A 0%, #2D3F6E 100%)" },
-    Horror:    { emoji: "🕯️", bg: "linear-gradient(135deg, #1E1226 0%, #341640 100%)" },
-    Fantasy:   { emoji: "🌙", bg: "linear-gradient(135deg, #12291E 0%, #1E4030 100%)" },
-    Moral:     { emoji: "🌱", bg: "linear-gradient(135deg, #2A1C10 0%, #4A3218 100%)" },
+    Adventure: {
+      emoji: "⚔️",
+      bg: "linear-gradient(135deg, #1E2A4A 0%, #2D3F6E 100%)",
+    },
+    Horror: {
+      emoji: "🕯️",
+      bg: "linear-gradient(135deg, #1E1226 0%, #341640 100%)",
+    },
+    Fantasy: {
+      emoji: "🌙",
+      bg: "linear-gradient(135deg, #12291E 0%, #1E4030 100%)",
+    },
+    Moral: {
+      emoji: "🌱",
+      bg: "linear-gradient(135deg, #2A1C10 0%, #4A3218 100%)",
+    },
   };
-  const cover = coverEmoji[story.genre] || { emoji: "📖", bg: "linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)" };
+
+  const cover =
+    coverEmoji[story.genre] || {
+      emoji: "📖",
+      bg: "linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%)",
+    };
 
   return (
-    <>
-      <style>{`
-        .k-card {
-          width: 230px;
-          flex-shrink: 0;
-          background: #161320;
-          border: 0.5px solid rgba(200,169,110,0.15);
-          border-radius: 16px;
-          overflow: hidden;
-          cursor: pointer;
-          transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
-          font-family: 'DM Sans', 'Segoe UI', sans-serif;
-        }
-        .k-card:hover {
-          transform: translateY(-3px);
-          border-color: rgba(200,169,110,0.4);
-          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        }
-        .k-card-cover {
-          height: 130px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 46px;
-        }
-        .k-card-body {
-          padding: 14px 16px 16px;
-        }
-        .k-card-tags {
-          display: flex;
-          gap: 6px;
-          margin-bottom: 10px;
-          flex-wrap: wrap;
-        }
-        .k-tag {
-          font-size: 10px;
-          padding: 3px 10px;
-          border-radius: 10px;
-          font-weight: 500;
-          text-transform: capitalize;
-        }
-        .k-tag-lang {
-          background: rgba(123,94,167,0.2);
-          color: #B49BD4;
-        }
-        .k-tag-genre {
-          background: rgba(200,169,110,0.15);
-          color: #C8A96E;
-        }
-        .k-card-title {
-          font-size: 14px;
-          font-weight: 500;
-          line-height: 1.45;
-          margin-bottom: 6px;
-          color: #F0EBE0;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .k-card-preview {
-          font-size: 12px;
-          color: #8A8499;
-          line-height: 1.65;
-          margin-bottom: 8px;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .k-card-author {
-          font-size: 11px;
-          color: #5F5E70;
-          margin-bottom: 14px;
-        }
-        .k-card-footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding-top: 12px;
-          border-top: 0.5px solid rgba(200,169,110,0.1);
-        }
-        .k-read-btn {
-          font-size: 12px;
-          font-weight: 500;
-          color: #C8A96E;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          font-family: inherit;
-          padding: 0;
-          transition: color 0.2s;
-        }
-        .k-read-btn:hover { color: #E8C98A; }
+    <div
+      className="
+        w-[230px]
+        flex-shrink-0
+        bg-[#161320]
+        border
+        border-[rgba(200,169,110,0.15)]
+        rounded-2xl
+        overflow-hidden
+        cursor-pointer
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:border-[rgba(200,169,110,0.4)]
+        hover:shadow-2xl
+        font-sans
+      "
+    >
+      {/* Cover */}
+      <div
+        className="
+          h-[130px]
+          flex
+          items-center
+          justify-center
+          text-[46px]
+        "
+        style={{ background: cover.bg }}
+        onClick={() => navigate(`/story/${story.id}`)}
+      >
+        {cover.emoji}
+      </div>
 
-        .k-like-btn {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 12px;
-          padding: 5px 12px;
-          border-radius: 20px;
-          border: 0.5px solid rgba(200,169,110,0.18);
-          background: transparent;
-          color: #8A8499;
-          cursor: pointer;
-          font-family: inherit;
-          transition: all 0.2s;
-        }
-        .k-like-btn:hover:not(:disabled) {
-          border-color: rgba(224,107,107,0.35);
-          background: rgba(224,107,107,0.08);
-          color: #E06B6B;
-        }
-        .k-like-btn.liked {
-          background: rgba(224,107,107,0.12);
-          color: #E06B6B;
-          border-color: rgba(224,107,107,0.28);
-        }
-        .k-like-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-      `}</style>
+      {/* Body */}
+      <div className="p-[14px] px-4 pb-4">
+        {/* Tags */}
+        <div className="flex gap-2 mb-3 flex-wrap">
+          <span
+            className="
+              text-[10px]
+              px-3
+              py-1
+              rounded-full
+              font-medium
+              capitalize
+              bg-[rgba(123,94,167,0.2)]
+              text-[#B49BD4]
+            "
+          >
+            {story.language}
+          </span>
 
-      <div className="k-card">
-
-        {/* Cover */}
-        <div
-          className="k-card-cover"
-          style={{ background: cover.bg }}
-          onClick={() => navigate(`/story/${story.id}`)}
-        >
-          {cover.emoji}
+          <span
+            className="
+              text-[10px]
+              px-3
+              py-1
+              rounded-full
+              font-medium
+              capitalize
+              bg-[rgba(200,169,110,0.15)]
+              text-[#C8A96E]
+            "
+          >
+            {story.genre}
+          </span>
         </div>
 
-        {/* Body */}
-        <div className="k-card-body">
+        {/* Title */}
+        <h2
+          onClick={() => navigate(`/story/${story.id}`)}
+          className="
+            text-[14px]
+            font-medium
+            leading-[1.45]
+            mb-2
+            text-[#F0EBE0]
+            line-clamp-2
+          "
+        >
+          {story.title}
+        </h2>
 
-          {/* Tags */}
-          <div className="k-card-tags">
-            <span className="k-tag k-tag-lang">{story.language}</span>
-            <span className="k-tag k-tag-genre">{story.genre}</span>
-          </div>
+        {/* Preview */}
+        <p
+          className="
+            text-[12px]
+            text-[#8A8499]
+            leading-[1.65]
+            mb-2
+            line-clamp-2
+          "
+        >
+          {story.content
+            ? story.content.slice(0, 100) + "..."
+            : "No description available"}
+        </p>
 
-          {/* Title */}
-          <h2
-            className="k-card-title"
+        {/* Author */}
+        <p className="text-[11px] text-[#5F5E70] mb-4">
+          By {story.author || "Unknown Author"}
+        </p>
+
+        {/* Footer */}
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            pt-3
+            border-t
+            border-[rgba(200,169,110,0.1)]
+          "
+        >
+          {/* Read */}
+          <button
+            className="
+              text-[12px]
+              font-medium
+              text-[#C8A96E]
+              bg-transparent
+              border-none
+              cursor-pointer
+              transition-colors
+              hover:text-[#E8C98A]
+            "
             onClick={() => navigate(`/story/${story.id}`)}
           >
-            {story.title}
-          </h2>
+            Read Story →
+          </button>
 
-          {/* Preview */}
-          <p className="k-card-preview">
-            {story.content
-              ? story.content.slice(0, 100) + "..."
-              : "No description available"}
-          </p>
+          {/* Like */}
+          <button
+            className={`
+              flex
+              items-center
+              gap-1
+              text-[12px]
+              px-3
+              py-1
+              rounded-full
+              border
+              cursor-pointer
+              transition-all
+              ${
+                liked
+                  ? "bg-[rgba(224,107,107,0.12)] text-[#E06B6B] border-[rgba(224,107,107,0.28)]"
+                  : "bg-transparent text-[#8A8499] border-[rgba(200,169,110,0.18)] hover:border-[rgba(224,107,107,0.35)] hover:bg-[rgba(224,107,107,0.08)] hover:text-[#E06B6B]"
+              }
+            `}
+            onClick={handleLike}
+            disabled={loading}
+          >
+            <span className="text-[14px]">
+              {liked ? "♥" : "♡"}
+            </span>
 
-          {/* Author */}
-          <p className="k-card-author">By {story.author || "Unknown Author"}</p>
-
-          {/* Footer */}
-          <div className="k-card-footer">
-
-            {/* Read */}
-            <button
-              className="k-read-btn"
-              onClick={() => navigate(`/story/${story.id}`)}
-            >
-              Read Story →
-            </button>
-
-            {/* Like — same logic as before */}
-            <button
-              className={`k-like-btn ${liked ? "liked" : ""}`}
-              onClick={handleLike}
-              disabled={loading}
-            >
-              <span style={{ fontSize: "14px" }}>
-                {liked ? "♥" : "♡"}
-              </span>
-              <span>{likeCount}</span>
-            </button>
-
-          </div>
+            <span>{likeCount}</span>
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

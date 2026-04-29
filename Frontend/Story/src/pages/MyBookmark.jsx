@@ -10,7 +10,7 @@ export default function Bookmark() {
   useEffect(() => {
     async function fetchBookmarks() {
       const token = localStorage.getItem('access')
-      const response = await fetch('http://127.0.0.1:8000/bookmark/', {
+      const response = await fetch('https://storyapp-38sq.onrender.com/bookmark/', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -24,7 +24,7 @@ export default function Bookmark() {
 
   async function removeBookmark(id) {
     const token = localStorage.getItem('access')
-    await fetch(`http://127.0.0.1:8000/bookmarks/${id}/`, {
+    await fetch(`https://storyapp-38sq.onrender.com/bookmarks/${id}/`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -115,4 +115,5 @@ export default function Bookmark() {
 
   </div>
 )
+
 }

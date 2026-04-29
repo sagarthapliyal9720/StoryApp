@@ -13,7 +13,7 @@ export default function MyStory() {
     try {
       const token = localStorage.getItem("access");
 
-      const response = await fetch("http://127.0.0.1:8000/upload/", {
+      const response = await fetch("https://storyapp-38sq.onrender.com/upload/", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -48,7 +48,7 @@ export default function MyStory() {
       const token = localStorage.getItem("access");
 
       const response = await fetch(
-        `http://127.0.0.1:8000/edit/${id}/`,
+        `https://storyapp-38sq.onrender.com/edit/${id}/`,
         {
           method: "DELETE",
           headers: {

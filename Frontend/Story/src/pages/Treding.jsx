@@ -22,7 +22,7 @@ async function FetchTrendingStory() {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch("http://127.0.0.1:8000/trending/", {
+    const response = await fetch("https://storyapp-38sq.onrender.com/trending/", {
       method: "GET",
       headers,
     });
