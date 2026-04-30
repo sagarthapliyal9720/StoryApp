@@ -15,7 +15,7 @@ class Story(models.Model):
     genre = models.CharField(max_length=50)
     author=models.ForeignKey(to=User,on_delete=models.CASCADE,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    audio_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         return self.title

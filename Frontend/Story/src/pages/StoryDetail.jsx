@@ -39,10 +39,18 @@ export default function StoryDetail() {
     }
   };
 
-  const handleListen = () => {
-    setAudioLoading(true);
-    setAudioUrl(`https://storyapp-38sq.onrender.com/listen/${id}/`);
-  };
+const handleListen = async () => {
+  setAudioLoading(true);
+  try {
+    const response = await fetch(`https://storyapp-38sq.onrender.com/listen/${id}/`);
+    const data = await response.json();
+    setAudioUrl(data.audio_url);  // ← use the actual Cloudinary URL
+  } catch (err) {
+    console.error("Audio fetch failed", err);
+  } finally {
+    setAudioLoading(false);
+  }
+};
 
   useEffect(() => {
     async function fetchStory() {

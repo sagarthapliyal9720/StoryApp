@@ -18,34 +18,26 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Story
 from gtts import gTTS
-
+import cloudinary.uploader
+import tempfile
+import requests
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 @api_view(["GET"])
 def listen_story(request, id):
-    try:
-        story = Story.objects.get(id=id)
-    except Story.DoesNotExist:
+    story = get_object_or_404(Story, id=id)
+
+    if not story.audio_url:
         return Response(
-            {"error": "Story not found"},
+            {"error": "Audio not available"},
             status=404
         )
 
-    file_path = os.path.join(
-        settings.MEDIA_ROOT,
-        f"audio/story_{id}.mp3"
-    )
-
-    if not os.path.exists(file_path):
-        return Response(
-            {"error": "Audio not generated yet"},
-            status=404
-        )
-
-    return FileResponse(
-        open(file_path, "rb"),
-        content_type="audio/mpeg"
-    )
-
+    return Response({
+        "audio_url": story.audio_url
+    })
 
 class StoryView(GenericAPIView):
     queryset = Story.objects.all()
@@ -153,73 +145,81 @@ class Likeview(GenericAPIView):
         like = Like.objects.filter(user=request.user)
         serializer = LikeSerializer(like, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
 
 
 class Add_storyView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        api_key = os.getenv("ELEVENLABS_API_KEY")
         serializer = StorySerializer(data=request.data)
 
         if serializer.is_valid():
-            story = serializer.save(
-                author=request.user
-            )
+            story = serializer.save(author=request.user)
 
-            # generate audio after story save
             try:
-                file_path = os.path.join(
-                    settings.MEDIA_ROOT,
-                    f"audio/story_{story.id}.mp3"
-                )
+                ELEVENLABS_API_KEY = api_key # or use settings/env var
+                VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"  # Default "George" voice — change as needed
 
-                os.makedirs(
-                    os.path.dirname(file_path),
-                    exist_ok=True
-                )
+                # Hindi stories use a different voice if needed
+                # For now using same voice for both
+                url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
 
-                lang = "hi" if story.language == "hindi" else "en"
+                headers = {
+                    "xi-api-key": ELEVENLABS_API_KEY,
+                    "Content-Type": "application/json"
+                }
 
-                tts = gTTS(
-                    text=story.content,
-                    lang=lang
-                )
+                payload = {
+                    "text": story.content,
+                    "model_id": "eleven_multilingual_v2",  # Supports Hindi + English
+                    "voice_settings": {
+                        "stability": 0.5,
+                        "similarity_boost": 0.75
+                    }
+                }
 
-                tts.save(file_path)
+                response = requests.post(url, json=payload, headers=headers)
+
+                if response.status_code == 200:
+                    # Save audio bytes to temp file and upload to Cloudinary
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
+                        temp_audio.write(response.content)
+                        temp_audio_path = temp_audio.name
+
+                    upload_result = cloudinary.uploader.upload(
+                        temp_audio_path,
+                        resource_type="video"
+                    )
+
+                    os.remove(temp_audio_path)  # Clean up temp file
+
+                    story.audio_url = upload_result.get("secure_url")
+                    story.save()
+                else:
+                    print("ElevenLabs error:", response.status_code, response.text)
 
             except Exception as e:
-                print(
-                    "Audio generation failed:",
-                    str(e)
-                )
+                print("Audio upload failed:", str(e))
 
             return Response(
                 {
-                    "message": "Story created and audio generated successfully"
+                    "message": "Story created successfully",
+                    "audio_url": story.audio_url
                 },
                 status=status.HTTP_201_CREATED
             )
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     def get(self, request):
-        stories = Story.objects.filter(
-            author=request.user
-        )
+        stories = Story.objects.filter(author=request.user)
+        serializer = StorySerializer(stories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
 
-        serializer = StorySerializer(
-            stories,
-            many=True
-        )
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
-        )
 class EditStoryview(APIView):
     permission_classes=[IsAuthenticated]
     def patch(self,request,id):
