@@ -12,8 +12,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Story, Bookmark, Like
 from .serailizers import StorySerializer, RegisterSerializer, BookmarkSerializer, LikeSerializer
 import os
+import threading
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from gtts import gTTS
 import cloudinary.uploader
 import tempfile
@@ -22,12 +22,37 @@ from collections import Counter
 load_dotenv()
 
 
+# ✅ Background audio generation function
+def generate_audio(story):
+    try:
+        lang = "hi" if story.language == "hindi" else "en"
+        tts = gTTS(text=story.content, lang=lang)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as f:
+            tts.save(f.name)
+            temp_path = f.name
+
+        upload_result = cloudinary.uploader.upload(
+            temp_path,
+            resource_type="video"
+        )
+        os.remove(temp_path)
+
+        story.audio_url = upload_result.get("secure_url")
+        story.save()
+
+        print("Audio generated successfully:", story.audio_url)
+
+    except Exception as e:
+        print("Audio generation failed:", str(e))
+
+
 @api_view(["GET"])
 def listen_story(request, id):
     story = get_object_or_404(Story, id=id)
 
     if not story.audio_url:
-        return Response({"error": "Audio not available"}, status=404)
+        return Response({"error": "Audio not available yet, please wait a moment"}, status=404)
 
     return Response({"audio_url": story.audio_url})
 
@@ -129,38 +154,15 @@ class Add_storyView(APIView):
         if serializer.is_valid():
             story = serializer.save(author=request.user)
 
-            try:
-                # Select language
-                lang = "hi" if story.language == "hindi" else "en"
-
-                # Generate audio with gTTS
-                tts = gTTS(text=story.content, lang=lang)
-
-                # Save to temp file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
-                    tts.save(temp_audio.name)
-                    temp_audio_path = temp_audio.name
-
-                # Upload to Cloudinary
-                upload_result = cloudinary.uploader.upload(
-                    temp_audio_path,
-                    resource_type="video"  # required for audio
-                )
-
-                # Clean up temp file
-                os.remove(temp_audio_path)
-
-                # Save Cloudinary URL to story
-                story.audio_url = upload_result.get("secure_url")
-                story.save()
-
-            except Exception as e:
-                print("Audio generation failed:", str(e))
+            # ✅ Start audio generation in background — no timeout!
+            thread = threading.Thread(target=generate_audio, args=(story,))
+            thread.daemon = True
+            thread.start()
 
             return Response(
                 {
-                    "message": "Story created successfully",
-                    "audio_url": story.audio_url
+                    "message": "Story created! Audio is being generated in background...",
+                    "story_id": story.id
                 },
                 status=status.HTTP_201_CREATED
             )
