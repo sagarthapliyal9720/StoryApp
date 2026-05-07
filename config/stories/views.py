@@ -11,41 +11,83 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from .models import Story, Bookmark, Like
 from .serailizers import StorySerializer, RegisterSerializer, BookmarkSerializer, LikeSerializer
+
 import os
 import threading
-from rest_framework.decorators import api_view
-from gtts import gTTS
-import cloudinary.uploader
 import tempfile
+import asyncio
+import edge_tts
+import cloudinary.uploader
 from dotenv import load_dotenv
 from collections import Counter
+
 load_dotenv()
 
 
-# ✅ Background audio generation function
+# ==================== GENRE + LANGUAGE BASED CONFIG ====================
+GENRE_CONFIG = {
+    "funny": {
+        "hindi": {"voice": "hi-IN-SwaraNeural", "rate": "+15%", "pitch": "+10Hz"},
+        "english": {"voice": "en-IN-NeerjaNeural", "rate": "+12%", "pitch": "+8Hz"}
+    },
+    "horror": {
+        "hindi": {"voice": "hi-IN-MadhurNeural", "rate": "-20%", "pitch": "-15Hz"},
+        "english": {"voice": "en-IN-PrabhatNeural", "rate": "-18%", "pitch": "-12Hz"}
+    },
+    "romantic": {
+        "hindi": {"voice": "hi-IN-SwaraNeural", "rate": "-12%", "pitch": "+15Hz"},
+        "english": {"voice": "en-IN-NeerjaNeural", "rate": "-10%", "pitch": "+12Hz"}
+    },
+    "adventure": {
+        "hindi": {"voice": "hi-IN-MadhurNeural", "rate": "+5%", "pitch": "+0Hz"},
+        "english": {"voice": "en-IN-PrabhatNeural", "rate": "+5%", "pitch": "+0Hz"}
+    },
+    "default": {
+        "hindi": {"voice": "hi-IN-SwaraNeural", "rate": "+0%", "pitch": "+0Hz"},
+        "english": {"voice": "en-IN-NeerjaNeural", "rate": "+0%", "pitch": "+0Hz"}
+    }
+}
+
+
+# ✅ Updated Background Audio Generation with edge-tts
 def generate_audio(story):
     try:
-        lang = "hi" if story.language == "hindi" else "en"
-        tts = gTTS(text=story.content, lang=lang)
+        # Get config based on language and genre
+        lang_key = "hindi" if story.language == "hindi" else "english"
+        config = GENRE_CONFIG.get(story.genre.lower(), GENRE_CONFIG["default"])
+        voice_config = config.get(lang_key, GENRE_CONFIG["default"][lang_key])
 
+        communicate = edge_tts.Communicate(
+            text=story.content,
+            voice=voice_config["voice"],
+            rate=voice_config["rate"],
+            pitch=voice_config["pitch"]
+        )
+
+        # Save to temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as f:
-            tts.save(f.name)
             temp_path = f.name
 
+        asyncio.run(communicate.save(temp_path))
+
+        # Upload to Cloudinary
         upload_result = cloudinary.uploader.upload(
             temp_path,
             resource_type="video"
         )
+
         os.remove(temp_path)
 
         story.audio_url = upload_result.get("secure_url")
         story.save()
 
-        print("Audio generated successfully:", story.audio_url)
+        print(f"✅ Audio Generated: {story.title} | Language: {story.language} | Genre: {story.genre}")
 
     except Exception as e:
-        print("Audio generation failed:", str(e))
+        print(f"❌ Audio generation failed for story {story.title}: {str(e)}")
 
+
+# ====================== YOUR EXISTING VIEWS (No Change) ======================
 
 @api_view(["GET"])
 def listen_story(request, id):
@@ -154,7 +196,7 @@ class Add_storyView(APIView):
         if serializer.is_valid():
             story = serializer.save(author=request.user)
 
-            # ✅ Start audio generation in background — no timeout!
+            # Background audio generation
             thread = threading.Thread(target=generate_audio, args=(story,))
             thread.daemon = True
             thread.start()
