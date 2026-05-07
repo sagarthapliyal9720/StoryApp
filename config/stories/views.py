@@ -20,6 +20,7 @@ import edge_tts
 import cloudinary.uploader
 from dotenv import load_dotenv
 from collections import Counter
+from rest_framework.decorators import api_view
 
 load_dotenv()
 
@@ -88,7 +89,6 @@ def generate_audio(story):
 
 
 # ====================== YOUR EXISTING VIEWS (No Change) ======================
-
 @api_view(["GET"])
 def listen_story(request, id):
     story = get_object_or_404(Story, id=id)
